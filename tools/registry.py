@@ -451,11 +451,14 @@ module(
     source["integrity"] = integrity(download(source["url"]))
     source_path = self.get_source_path(module_name, version)
     patch_dir = source_path.parent / "patches"
-    available = sorted(p.name for p in patch_dir.iterdir())
+    if patch_dir.exists():
+      available = sorted(p.name for p in patch_dir.iterdir())
+    else:
+      available = []
     current = source.get("patches", {}).keys()
-    patch_files = [patch_dir / p for p in current if p in available]
+    patch_files = [patch_dir / p for p in current]
     patch_files.extend(patch_dir / p for p in available if p not in current)
-    patches = {patch.name: integrity(read(patch)) for patch in patch_files}
+    patches = {str(patch.relative_to(patch_dir)): integrity(read(patch)) for patch in patch_files}
     source["patches"] = patches
     json_dump(source_path, source, sort_keys=False)
 
